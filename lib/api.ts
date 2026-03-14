@@ -64,6 +64,26 @@ export const api = {
     apiFetch<League[]>('/asgard/leagues', { headers: { 'x-asgard-secret': token } }),
   asgardGetPlayers: (token: string) =>
     apiFetch<Player[]>('/asgard/players', { headers: { 'x-asgard-secret': token } }),
+  asgardGetOracleStatus: (token: string) =>
+    apiFetch<OracleStatus>('/asgard/oracle/status', { headers: { 'x-asgard-secret': token } }),
+  asgardInitializeProtocol: (token: string, body: { entryFeeBps: number; purchaseFeeBps: number; prizeFeeBps: number; treasury?: string }) =>
+    apiFetch<{ success: boolean; configPda: string }>('/asgard/oracle/initialize', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'x-asgard-secret': token },
+    }),
+  asgardRequestAirdrop: (token: string, amount = 1) =>
+    apiFetch<{ success: boolean; signature: string; balance: number; amount: number }>('/asgard/oracle/airdrop', {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+      headers: { 'x-asgard-secret': token },
+    }),
+  asgardGeneratePlayers: (token: string, count = 20) =>
+    apiFetch<{ generated: number }>('/asgard/players/generate', {
+      method: 'POST',
+      body: JSON.stringify({ count }),
+      headers: { 'x-asgard-secret': token },
+    }),
 };
 
 // Types
@@ -141,6 +161,21 @@ export interface MatchEvent {
   club: string | null;
   player_name: string | null;
   detail: Record<string, unknown>;
+}
+
+export interface OracleStatus {
+  oracle: { pubkey: string; balance: number; balanceLamports: number };
+  program: { id: string; rpc: string };
+  initialized: boolean;
+  protocolConfig: {
+    pda: string;
+    authority: string;
+    treasury: string;
+    entryFeeBps: number;
+    purchaseFeeBps: number;
+    prizeFeeBps: number;
+    leagueCount: number;
+  } | null;
 }
 
 export interface Commentary {
