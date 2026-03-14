@@ -27,6 +27,11 @@ export const api = {
     return apiFetch<League[]>(`/leagues${qs ? `?${qs}` : ''}`);
   },
   getLeague: (pubkey: string) => apiFetch<LeagueDetail>(`/leagues/${pubkey}`),
+  joinLeague: (pubkey: string, managerPubkey: string) =>
+    apiFetch<Record<string, unknown>>(`/leagues/${pubkey}/join`, {
+      method: 'POST',
+      body: JSON.stringify({ managerPubkey }),
+    }),
 
   // Players
   getPlayers: (params?: { position?: string; available?: boolean; limit?: number; offset?: number }) => {
@@ -39,6 +44,26 @@ export const api = {
     ).toString();
     return apiFetch<Player[]>(`/players${qs ? `?${qs}` : ''}`);
   },
+  getPlayer: (playerId: number) => apiFetch<Player>(`/players/${playerId}`),
+
+  // Matches
+  getMatches: (leaguePubkey: string) =>
+    apiFetch<Match[]>(`/matches?league=${leaguePubkey}`),
+  getMatchEvents: (matchId: number) =>
+    apiFetch<MatchEvent[]>(`/matches/${matchId}/events`),
+  getMatchCommentary: (matchId: number) =>
+    apiFetch<Commentary[]>(`/matches/${matchId}/commentary`),
+
+  // Admin
+  adminLogin: (email: string, password: string) =>
+    apiFetch<{ token: string }>('/auth/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  asgardGetLeagues: (token: string) =>
+    apiFetch<League[]>('/asgard/leagues', { headers: { 'x-asgard-secret': token } }),
+  asgardGetPlayers: (token: string) =>
+    apiFetch<Player[]>('/asgard/players', { headers: { 'x-asgard-secret': token } }),
 };
 
 // Types
@@ -90,4 +115,37 @@ export interface Player {
   price: number;
   current_league: string | null;
   on_chain_pubkey: string;
+}
+
+export interface Match {
+  id: number;
+  league: string;
+  match_index: number;
+  home_club: string;
+  away_club: string;
+  home_club_name?: string;
+  away_club_name?: string;
+  home_score: number | null;
+  away_score: number | null;
+  status: 'scheduled' | 'playing' | 'finished';
+  scheduled_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface MatchEvent {
+  id: number;
+  match_id: number;
+  minute: number;
+  event_type: 'goal' | 'save' | 'miss' | 'kickoff' | 'halftime' | 'fulltime';
+  club: string | null;
+  player_name: string | null;
+  detail: Record<string, unknown>;
+}
+
+export interface Commentary {
+  id: number;
+  match_id: number;
+  minute: number;
+  text: string;
 }
